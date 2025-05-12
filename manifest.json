@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Test Case Counter",
+  "version": "1.0",
+  "description": "A counter for test cases with snippet management and data export/import functionality",
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": ["storage", "clipboardRead", "clipboardWrite"],
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+} 
