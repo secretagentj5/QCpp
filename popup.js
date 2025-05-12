@@ -1,3 +1,10 @@
+// Recovery mechanism state variables
+let deletedSnippets = [];
+let preDeletionSnippets = [];
+let undoTimeout = null;
+let isRecovering = false;
+let hasRecovered = false;
+
 document.addEventListener('DOMContentLoaded', function() {
   const snippetText = document.getElementById('snippetText');
   const tagSelectForNewSnippet = document.getElementById('tagSelect');
@@ -14,6 +21,23 @@ document.addEventListener('DOMContentLoaded', function() {
   const imagePreview = document.getElementById('imagePreview');
   const imagePreviewContainer = document.getElementById('imagePreviewContainer');
   const removeImageBtn = document.getElementById('removeImage');
+
+  // Create the recovery button element
+  const recoveryButtonContainer = document.createElement('div');
+  recoveryButtonContainer.className = 'recovery-button-container';
+  recoveryButtonContainer.innerHTML = `
+    <div class="snippets-deleted-text">0 snippets deleted</div>
+    <button id="recoverSnippetBtn" class="recover-btn">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 4v6h6"></path>
+        <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+      </svg>
+      Recover
+    </button>
+  `;
+  
+  // Add to document body instead of after filter row
+  document.body.appendChild(recoveryButtonContainer);
 
   let currentImageDataUrl = null; // Store image as data URL
   
@@ -417,7 +441,6 @@ document.addEventListener('DOMContentLoaded', function() {
         imagePreviewContainer.style.display = 'none';
         if (document.getElementById('imageUpload')) document.getElementById('imageUpload').value = '';
             applyFilters();
-        // Success notification removed as requested
           });
         });
       }
@@ -1159,6 +1182,51 @@ document.addEventListener('DOMContentLoaded', function() {
   if (importFileInput) {
     importFileInput.addEventListener('change', importData);
   }
+
+  // Recovery button click handler
+  document.addEventListener('click', function(e) {
+    if (e.target.closest('#recoverSnippetBtn')) {
+      recoverDeletedSnippets();
+    }
+  });
+
+  // Initialize the recovery button setting
+  chrome.storage.local.get(['toggleRecoveryButton'], function(result) {
+    // Default to true if not set
+    const recoveryEnabled = result.toggleRecoveryButton !== false;
+    
+    // Add the setting to the settings modal if not already there
+    const settingsToggles = document.querySelector('.settings-toggles');
+    if (settingsToggles && !document.getElementById('toggleRecoveryButton')) {
+      const recoveryToggle = document.createElement('label');
+      recoveryToggle.innerHTML = `<input type="checkbox" id="toggleRecoveryButton" ${recoveryEnabled ? 'checked' : ''}> Show Recovery Button for Deleted Snippets`;
+      settingsToggles.appendChild(document.createElement('br'));
+      settingsToggles.appendChild(recoveryToggle);
+      
+      // Add event listener for the toggle
+      const recoveryToggleCheckbox = document.getElementById('toggleRecoveryButton');
+      if (recoveryToggleCheckbox) {
+        recoveryToggleCheckbox.addEventListener('change', function() {
+          chrome.storage.local.set({ toggleRecoveryButton: this.checked });
+          
+          // If disabled, hide the recovery button and clear state
+          if (!this.checked) {
+            hideRecoveryButton();
+          }
+        });
+      }
+    }
+  });
+
+  // Add an event listener for the recover button directly on the document
+  // This ensures it works even if the button is dynamically created
+  document.addEventListener('click', function(e) {
+    const recoverBtn = e.target.closest('#recoverSnippetBtn');
+    if (recoverBtn) {
+      console.log("Recover button clicked");
+      recoverDeletedSnippets();
+    }
+  });
 });
 
 function applyFilters() {
@@ -1427,16 +1495,12 @@ function createSnippetActions(snippet) {
     copyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
     copyBtn.addEventListener('click', async () => {
       try {
-        // Only copy text, even if image exists
-        if (snippet.text) {
-          await navigator.clipboard.writeText(snippet.text);
-          showCopySuccess(copyBtn);
-        } else {
-          showNotification('No text to copy.', 'info');
-        }
+        // Only copy text, regardless of whether an image exists
+        await navigator.clipboard.writeText(snippet.text || '');
+        showCopySuccess(copyBtn);
       } catch (error) {
-        console.error('Copy error:', error);
-        showNotification('Failed to copy content to clipboard.', 'error');
+        console.error('Copy text error:', error);
+        showNotification('Failed to copy text to clipboard.', 'error');
         copyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="red" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>`;
       setTimeout(() => {
       copyBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
@@ -1445,166 +1509,102 @@ function createSnippetActions(snippet) {
     });
     actions.appendChild(copyBtn);
 
-  // Delete button
+  // Delete button - no confirmation
     const deleteBtn = document.createElement('button');
     deleteBtn.className = 'delete-btn';
     deleteBtn.title = 'Delete';
     deleteBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>`;
   deleteBtn.addEventListener('click', () => {
-      // No confirmation - directly delete the snippet
-      deleteSnippet(snippet.id);
+      // Modified delete functionality with recovery mechanism
+      chrome.storage.local.get(['snippets', 'toggleRecoveryButton'], function(result) {
+        const snippets = result.snippets || [];
+        const recoveryEnabled = result.toggleRecoveryButton !== false; // Default to true
+        
+        console.log("Delete button clicked for snippet ID:", snippet.id);
+        console.log("Recovery enabled:", recoveryEnabled);
+        
+        // If this is the first deletion in a sequence, take a snapshot
+        if (deletedSnippets.length === 0) {
+          preDeletionSnippets = [...snippets];
+          hasRecovered = false;
+          // Clear any existing timeout
+          if (undoTimeout) {
+            clearTimeout(undoTimeout);
+          }
+        }
+        
+        // Add the deleted snippet to deletedSnippets
+        const deletedSnippet = snippets.find(s => s.id === snippet.id);
+        if (deletedSnippet) {
+          deletedSnippets.push(deletedSnippet);
+          console.log("Added to deleted snippets, count:", deletedSnippets.length);
+        }
+        
+        // Remove the snippet from the list
+        const updatedSnippets = snippets.filter(s => s.id !== snippet.id);
+        
+        // Update storage
+        chrome.storage.local.set({ snippets: updatedSnippets }, function() {
+          // Refresh the list
+          applyFilters();
+          
+          // Show recovery button if enabled
+          if (recoveryEnabled && deletedSnippets.length > 0) {
+            const recoveryButtonContainer = document.querySelector('.recovery-button-container');
+            console.log("Recovery button container found:", !!recoveryButtonContainer);
+            
+            if (recoveryButtonContainer) {
+              // Update the count text
+              const countText = recoveryButtonContainer.querySelector('.snippets-deleted-text');
+              if (countText) {
+                countText.textContent = `${deletedSnippets.length} snippet${deletedSnippets.length > 1 ? 's' : ''} deleted`;
+              }
+              
+              // Show the container
+              recoveryButtonContainer.classList.add('visible');
+              console.log("Added visible class to recovery button");
+            } else {
+              console.error("Recovery button container not found in DOM");
+              
+              // Try to create the recovery button container if it doesn't exist
+              const newRecoveryContainer = document.createElement('div');
+              newRecoveryContainer.className = 'recovery-button-container';
+              newRecoveryContainer.innerHTML = `
+                <div class="snippets-deleted-text">${deletedSnippets.length} snippet${deletedSnippets.length > 1 ? 's' : ''} deleted</div>
+                <button id="recoverSnippetBtn" class="recover-btn">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 4v6h6"></path>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                  </svg>
+                  Recover
+                </button>
+              `;
+              
+              // Add to document body
+              document.body.appendChild(newRecoveryContainer);
+              
+              // Make it visible
+              newRecoveryContainer.classList.add('visible');
+              console.log("Created and added visible recovery container");
+            }
+            
+            // Set timeout to hide recovery button after 10 seconds
+            undoTimeout = setTimeout(hideRecoveryButton, 10000);
+          }
+        });
+      });
     });
     actions.appendChild(deleteBtn);
     
   return actions;
 }
 
-// Global array to store recently deleted snippets for recovery
-let deletedSnippets = [];
-let restoreTimers = {};
-
-// Function to delete a snippet and add it to recently deleted
-function deleteSnippet(snippetId) {
-      chrome.storage.local.get(['snippets'], function(result) {
-    const snippets = result.snippets || [];
-    const snippetIndex = snippets.findIndex(s => s.id === snippetId);
-    
-    if (snippetIndex !== -1) {
-      // Store the deleted snippet for potential recovery
-      const deletedSnippet = snippets[snippetIndex];
-      deletedSnippets.unshift(deletedSnippet);
-      
-      // Remove from current snippets
-      const updatedSnippets = snippets.filter(s => s.id !== snippetId);
-        chrome.storage.local.set({ snippets: updatedSnippets }, function() {
-        // Show restore UI
-        showRestoreUI();
-        // Set timer to remove restore option after 10 seconds
-        const timerId = setTimeout(() => {
-          removeDeletedSnippet(deletedSnippet.id);
-        }, 10000); // 10 seconds
-        
-        // Store the timer ID for potential cancellation
-        restoreTimers[deletedSnippet.id] = timerId;
-        
-        // Refresh the snippets list
-        applyFilters();
-      });
-    }
-  });
-}
-
-// Function to remove a snippet from the deleted snippets array
-function removeDeletedSnippet(snippetId) {
-  deletedSnippets = deletedSnippets.filter(s => s.id !== snippetId);
-  
-  // Clear the timer
-  if (restoreTimers[snippetId]) {
-    clearTimeout(restoreTimers[snippetId]);
-    delete restoreTimers[snippetId];
-  }
-  
-  // If no more deleted snippets, hide the restore UI
-  if (deletedSnippets.length === 0) {
-    hideRestoreUI();
-  } else {
-    // Update the restore UI (to show the next deleted snippet)
-    updateRestoreUI();
-  }
-}
-
-// Function to restore a deleted snippet
-function restoreSnippet(snippetId) {
-  const snippetToRestore = deletedSnippets.find(s => s.id === snippetId);
-  
-  if (snippetToRestore) {
-    chrome.storage.local.get(['snippets'], function(result) {
-      const snippets = result.snippets || [];
-      
-      // Add the snippet back
-      snippets.unshift(snippetToRestore);
-      
-      chrome.storage.local.set({ snippets: snippets }, function() {
-        // Remove from deleted snippets
-        removeDeletedSnippet(snippetId);
-        
-        // Show success notification
-        showNotification('Snippet restored successfully!', 'success');
-        
-        // Refresh the snippets list
-        applyFilters();
-      });
-    });
-  }
-}
-
-// Show restore UI with the most recently deleted snippet
-function showRestoreUI() {
-  // Create or get the restore container
-  let restoreContainer = document.getElementById('restoreContainer');
-  
-  if (!restoreContainer) {
-    restoreContainer = document.createElement('div');
-    restoreContainer.id = 'restoreContainer';
-    restoreContainer.className = 'restore-container';
-    document.body.appendChild(restoreContainer);
-  }
-  
-  updateRestoreUI();
-  restoreContainer.style.display = 'flex';
-}
-
-// Update the restore UI with current deleted snippets
-function updateRestoreUI() {
-  const restoreContainer = document.getElementById('restoreContainer');
-  if (!restoreContainer) return;
-  
-  // Clear existing content
-  restoreContainer.innerHTML = '';
-  
-  if (deletedSnippets.length > 0) {
-    // Create container for button with message overlay
-    const btnContainer = document.createElement('div');
-    btnContainer.className = 'restore-btn-container';
-    
-    // Create message that will appear as small text above the button
-    const message = document.createElement('div');
-    message.className = 'restore-message';
-    message.textContent = `${deletedSnippets.length} snippet${deletedSnippets.length > 1 ? 's' : ''} deleted`;
-    btnContainer.appendChild(message);
-    
-    // Create restore button
-    const restoreBtn = document.createElement('button');
-    restoreBtn.className = 'restore-btn';
-    restoreBtn.innerHTML = `
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
-        <path d="M3 3v5h5"></path>
-      </svg>
-      Restore
-    `;
-    restoreBtn.addEventListener('click', () => {
-      // Restore all snippets
-      const currentDeleted = [...deletedSnippets];
-      currentDeleted.forEach(snippet => {
-        restoreSnippet(snippet.id);
-      });
-    });
-    btnContainer.appendChild(restoreBtn);
-    
-    // Add the button container to the restore container
-    restoreContainer.appendChild(btnContainer);
-  } else {
-    hideRestoreUI();
-  }
-}
-
-// Hide the restore UI
-function hideRestoreUI() {
-  const restoreContainer = document.getElementById('restoreContainer');
-  if (restoreContainer) {
-    restoreContainer.style.display = 'none';
-  }
+// Helper function to display success on copy
+function showCopySuccess(button) {
+  button.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+  setTimeout(() => {
+    button.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>`;
+  }, 1500);
 }
 
 // Consolidated Click Handler for snippets
@@ -1654,7 +1654,7 @@ function handleSnippetDoubleClick(event) {
   });
 }
 
-// Function to switch snippet to edit mode
+// Function to switch snippet to edit mode - reordering to put text on top, image on bottom
 function enterEditMode(snippetElement, snippetId) {
   // Prevent browser selection (in case preventDefault didn't fully work)
   if (window.getSelection) {
@@ -1692,19 +1692,20 @@ function enterEditMode(snippetElement, snippetId) {
     const editContainer = document.createElement('div');
     editContainer.className = 'snippet-edit-container';
 
-    // Create textarea for text
+    // Create textarea for text FIRST (on top)
     const editArea = document.createElement('textarea');
     editArea.className = 'snippet-edit-area';
     editArea.value = snippet.text || '';
     editArea.rows = Math.max(3, ((snippet.text || '').match(/\\n/g) || []).length + 1); // Basic auto-sizing
-
-    // Add the textarea first (at the top)
+    
+    // Add the textarea before the image (text on top)
     editContainer.appendChild(editArea);
 
-    // Add image preview if there's an image (now below the text area)
+    // Add image preview SECOND (on bottom) if there's an image
     if (snippet.image) {
       const imagePreview = document.createElement('div');
       imagePreview.className = 'image-preview-container edit-mode-image';
+      imagePreview.style.marginTop = '10px'; // Add spacing between text and image
       imagePreview.innerHTML = `
         <img src="${snippet.image}" alt="Snippet image">
         <button class="remove-image-btn" title="Remove image">
@@ -1900,23 +1901,60 @@ function showNotification(message, type = 'info') {
   }, 3000);
 }
 
-// Function to show success animation for copy button
-function showCopySuccess(buttonElement) {
-  buttonElement.classList.add('copy-success');
-  buttonElement.innerHTML = `
-    <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-      <polyline points="20 6 9 17 4 12"></polyline>
-    </svg>
-  `;
+// Function to hide the recovery button and clear recovery state
+function hideRecoveryButton() {
+  const recoveryButtonContainer = document.querySelector('.recovery-button-container');
+  if (recoveryButtonContainer) {
+    recoveryButtonContainer.classList.remove('visible');
+  }
   
-  // Reset button after animation
-  setTimeout(() => {
-    buttonElement.classList.remove('copy-success');
-    buttonElement.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-      </svg>
-    `;
-  }, 1500);
+  // Clear recovery state
+  deletedSnippets = [];
+  preDeletionSnippets = [];
+  isRecovering = false;
+  
+  // Clear timeout if exists
+  if (undoTimeout) {
+    clearTimeout(undoTimeout);
+    undoTimeout = null;
+  }
+}
+
+// Function to recover deleted snippets
+function recoverDeletedSnippets() {
+  chrome.storage.local.get(['toggleRecoveryButton'], function(result) {
+    const recoveryEnabled = result.toggleRecoveryButton !== false;
+    
+    // Check if recovery is allowed
+    if (!recoveryEnabled ||
+        deletedSnippets.length === 0 ||
+        isRecovering ||
+        hasRecovered ||
+        preDeletionSnippets.length === 0) {
+      return;
+    }
+    
+    // Set the recovering flag to prevent multiple recoveries
+    isRecovering = true;
+    
+    // Clear any existing timeout
+    if (undoTimeout) {
+      clearTimeout(undoTimeout);
+    }
+    
+    // Restore snippets from pre-deletion snapshot
+    chrome.storage.local.set({ snippets: preDeletionSnippets }, function() {
+      // Mark as recovered to prevent further recovery
+      hasRecovered = true;
+      
+      // Refresh the list to show recovered snippets
+      applyFilters();
+      
+      // Hide the recovery button
+      hideRecoveryButton();
+      
+      // Show confirmation notification
+      showNotification('Snippets recovered successfully', 'success');
+    });
+  });
 }
