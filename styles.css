@@ -540,14 +540,14 @@ body {
 }
 
 /* Tag Backgrounds for Card and Controls */
-.input-controls-row.bg-created { background-color: var(--color-created-bg); }
-.input-controls-row.bg-closed { background-color: var(--color-closed-bg); }
-.input-controls-row.bg-reopened { background-color: var(--color-reopened-bg); }
-.input-controls-row.bg-note { background-color: var(--color-note-bg); }
-.input-controls-row.bg-gray { background-color: var(--color-gray-bg); }
-.input-controls-row.bg-purple { background-color: var(--color-purple-bg); }
-.input-controls-row.bg-pink { background-color: var(--color-pink-bg); }
-.input-controls-row.bg-teal { background-color: var(--color-teal-bg); }
+.input-controls-row.bg-created { background-color: var(--color-created-bg); border: none; }
+.input-controls-row.bg-closed { background-color: var(--color-closed-bg); border: none; }
+.input-controls-row.bg-reopened { background-color: var(--color-reopened-bg); border: none; }
+.input-controls-row.bg-note { background-color: var(--color-note-bg); border: none; }
+.input-controls-row.bg-gray { background-color: var(--color-gray-bg); border: none; }
+.input-controls-row.bg-purple { background-color: var(--color-purple-bg); border: none; }
+.input-controls-row.bg-pink { background-color: var(--color-pink-bg); border: none; }
+.input-controls-row.bg-teal { background-color: var(--color-teal-bg); border: none; }
 
 .card.bg-created {
   background-color: var(--color-created-bg);
@@ -2159,30 +2159,30 @@ body {
 
 .theme-dark .input-controls-row.bg-gray { 
   background-color: transparent;
-  border: 1px solid var(--color-gray);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-xs);
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 
 .theme-dark .input-controls-row.bg-purple { 
   background-color: transparent;
-  border: 1px solid var(--color-purple);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-xs);
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 
 .theme-dark .input-controls-row.bg-pink { 
   background-color: transparent;
-  border: 1px solid var(--color-pink);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-xs);
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 
 .theme-dark .input-controls-row.bg-teal { 
   background-color: transparent;
-  border: 1px solid var(--color-teal);
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-xs);
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 
 .theme-dark .tag-filter-select.bg-created { 
