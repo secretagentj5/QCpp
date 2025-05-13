@@ -2397,7 +2397,7 @@ body {
   height: 24px;
   border-radius: 50%;
   border: none;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.8);
   color: white;
   font-size: 16px;
   cursor: pointer;
@@ -2416,7 +2416,7 @@ body {
 }
 
 .copy-success {
-  background-color: rgba(16, 185, 129, 0.7) !important;
+  background-color: rgba(16, 185, 129, 0.9) !important;
 }
 
 /* Responsive adjustments for the input controls */
@@ -2497,15 +2497,15 @@ body {
 }
 
 .copy-image-btn:hover {
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 1);
 }
 
 .theme-dark .copy-image-btn {
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(255, 255, 255, 0.8);
 }
 
 .theme-dark .copy-image-btn:hover {
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 1);
 }
 
 .copy-image-btn svg {
@@ -2515,7 +2515,11 @@ body {
 }
 
 .copy-success {
-  background-color: rgba(16, 185, 129, 0.7) !important;
+  background-color: rgba(16, 185, 129, 0.9) !important;
+}
+
+.theme-dark .copy-success svg {
+  stroke: white;
 }
 
 /* Responsive adjustments for the input controls */
@@ -2613,4 +2617,8 @@ body {
 @keyframes slideUp {
   from { transform: translate(-50%, 100%); }
   to { transform: translate(-50%, 0); }
+}
+
+.theme-dark .copy-image-btn svg {
+  stroke: rgba(0, 0, 0, 0.9);
 }
