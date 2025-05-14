@@ -1,6 +1,6 @@
 # QuickClip++
 
-A lightweight Chrome extension designed to help users track progress, organize information, and manage snippets efficiently with customizable tags. Built by **Akash Sumit Lamba**.
+A lightweight Chrome extension designed to help users track progress, organize information, and manage snippets efficiently with customizable tags.
 
 ## Overview
 
