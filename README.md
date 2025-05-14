@@ -4,14 +4,15 @@ A Chrome extension to help track test cases and manage test-related snippets wit
 
 ## Features
 
-- Counter for tracking test cases executed
+- Counter to keep track of constant progress
 - Multiple mini-counters with customization options
-- Snippet management with customizable tags and colors
+- Snippet management with Upto 8 customizable tags and colors
 - Theme selection (Light/Dark)
 - Export and import functionality to backup and restore your data
 - Automatic link detection and highlighting
 - Copy and delete functionality for snippets
 - Reset button to clear counter and snippets
+- Save image in snippet 
 
 ## Installation
 
