@@ -4,7 +4,7 @@ A lightweight Chrome extension designed to help users track progress, organize i
 
 ## Overview
 
-The **Test Case Counter Chrome Extension** provides an intuitive way to track progress and manage snippets. It includes:
+The **QuickClip++ Extension** provides an intuitive way to track progress and manage snippets. It includes:
 - A **main counter** for overall tracking.
 - **Mini-counters** for specific tasks.
 - **Snippet organization** with customizable tags and colors.
