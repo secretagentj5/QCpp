@@ -1,57 +1,90 @@
-# Test Case Counter Chrome Extension
+# QuickClip++
 
-A Chrome extension to help track test cases and manage test-related snippets with different status tags.
+A lightweight Chrome extension designed to help users track progress, organize information, and manage snippets efficiently with customizable tags. Built by **Akash Sumit Lamba**.
+
+## Overview
+
+The **Test Case Counter Chrome Extension** provides an intuitive way to track progress and manage snippets. It includes:
+- A **main counter** for overall tracking.
+- **Mini-counters** for specific tasks.
+- **Snippet organization** with customizable tags and colors.
+
+Ideal for anyone looking to streamline their workflow and keep track of important details.
 
 ## Features
 
-- Counter to keep track of constant progress
-- Multiple mini-counters with customization options
-- Snippet management with Upto 8 customizable tags and colors
-- Theme selection (Light/Dark)
-- Export and import functionality to backup and restore your data
-- Automatic link detection and highlighting
-- Copy and delete functionality for snippets
-- Reset button to clear counter and snippets
-- Save image in snippet 
+- **Main Counter**: Easily track progress with increment/decrement buttons.
+- **Mini-Counters**: Create multiple counters to monitor different tasks.
+- **Snippet Management**: Organize information with customizable tags and colors.
+- **Theme Support**: Switch between **Light** and **Dark** themes for a comfortable experience.
+- **Data Backup**: Export and import functionality to back up and restore data.
+- **Automatic Link Detection**: Links in snippets are automatically detected and made clickable.
+- **Snippet Actions**: Quickly copy or delete snippets with dedicated buttons.
+- **Reset Functionality**: Reset counters and snippets with a single click.
+- **Image Support**: Save images within snippets for better documentation.
 
 ## Installation
 
-1. Download or clone this repository
-2. Open Chrome and go to `chrome://extensions/`
-3. Enable "Developer mode" in the top right corner
-4. Click "Load unpacked" and select the extension directory
+Follow these steps to install the extension:
+
+1. **Download or clone** the repository from GitHub.
+2. Open Chrome and navigate to `chrome://extensions/`.
+3. Enable **"Developer mode"** in the top right corner.
+4. Click **"Load unpacked"** and select the downloaded extension directory.
 
 ## Usage
 
-1. Click the extension icon in your Chrome toolbar to open the popup
-2. Use the + and - buttons to increment/decrement the test case counter
-3. To add a snippet:
-   - Select a status tag from the dropdown
-   - Enter your text or paste a link in the text area
-   - Click "Save Snippet" or "Paste" to paste and save in one step
-4. To copy a snippet, click the 📋 button
-5. To delete a snippet, click the 🗑️ button
-6. To reset the main counter, click the reset button
+Pin the extension to your toolbar & Click the extension icon in your Chrome toolbar to open the popup.
+
+### Managing Counters
+- Use the **+** and **-** buttons to increment or decrement the main counter and reset to set it to default **0**.
+
+### Adding a Snippet
+1. Select a **status tag** from the dropdown.
+2. Enter your text or paste a link in the text area.
+3. Click **"Save Snippet"** or use the **"Paste"** button to paste and save in one step.
+
+### Snippet Actions
+- **Copy a Snippet**: Click the 📋 button next to the snippet.
+- **Delete a Snippet**: Click the 🗑️ button next to the snippet.
+- **Edit a Snippet**: Double click on snippet to edit & click anywhere out of snippet to save the changes.
 
 ## Settings
 
-Click the ⚙️ icon to access settings:
+Access settings by clicking the ⚙️ icon in the extension popup:
 
-1. **Counters**: Add, rename, hide, or delete counters
-2. **Tags**: Add, rename, delete tags and customize their colors
-3. **Theme**: Choose between Light and Dark themes
-4. **Data Management**: Export or import your data
-5. **Display Options**: Toggle visibility of various UI elements
+- **Counters**: Add, rename, hide, or delete mini-counters.
+- **Tags**: Create, rename, or hide tags.
+- **Theme**: Toggle between **Light** and **Dark** themes.
+- **Data Management**: Export or import your data to manage backups.
+- **Display Options**: Show or hide UI elements and configure behaviour.
 
 ## Data Management
 
-- **Export Data**: Click "Export Data" to download a JSON file containing all your counters, snippets, and settings
-- **Import Data**: Click "Import Data" to upload a previously exported JSON file and restore your data
-  - Note: Importing data will replace all your current data
+- **Export Data**: Download a JSON file with all your counters, snippets, and settings by clicking **"Export Data"**.
+- **Import Data**: Upload a previously exported JSON file to restore your data by clicking **"Import Data"**.
+- **Warning**: Importing data will overwrite your current data, so ensure you have a backup if needed.
 
 ## Notes
 
-- The counter and snippets are stored locally in your browser
-- Links in snippets are automatically detected and made clickable
-- The extension will remember your counter and snippets between browser sessions
-- Regularly export your data to prevent loss when clearing browser data 
+- All data (**counters, snippets, settings**) is stored **locally** in your browser.
+- Links in snippets are **automatically detected** and made clickable for convenience.
+- Data persists between browser sessions but may be lost if browser data is cleared—**export regularly** to avoid data loss.
+
+## Contributing
+
+Contributions are welcome! To contribute:
+
+1. **Fork** the repository on GitHub.
+2. **Create a new branch** for your feature or bug fix.
+3. **Submit a pull request** with a detailed description of your changes.
+
+Please ensure your code follows the existing style and includes appropriate tests.
+
+## Author
+
+Developed by **[akasumitlamba](https://github.com/akasumitlamba)**.
+
+## License
+
+This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
