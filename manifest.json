@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Test Case Counter",
+  "name": "QuickClip++",
   "version": "1.0",
-  "description": "A counter for test cases with snippet management and data export/import functionality",
+  "description": "A Clipboard Manager for Chromium-based Browsers with Enhanced Features and Customization - TAGS, IMAGES, and MORE!",
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
