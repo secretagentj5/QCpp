@@ -2265,6 +2265,15 @@ body {
   -webkit-user-select: text;
   -moz-user-select: text;
   -ms-user-select: text;
+  /* Ensure the edit area takes full width of its container */
+  box-sizing: border-box;
+  flex: 1 1 100%;
+}
+
+.snippet-edit-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
 .snippet-edit-controls {
